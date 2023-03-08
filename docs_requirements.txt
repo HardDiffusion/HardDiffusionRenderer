@@ -1,0 +1,3 @@
+celery[redis]
+psycopg2
+sphinx

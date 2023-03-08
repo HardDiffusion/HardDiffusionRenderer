@@ -1,0 +1,4 @@
+[behave]
+paths = tests/features
+junit_directory = reports
+junit = yes

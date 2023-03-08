@@ -1,0 +1,1 @@
+isort . & black --exclude=".*\/*(venv|static|test-results)\/*.*" .

@@ -1,0 +1,1 @@
+celery -A HardDiffusionRenderer worker -l INFO --concurrency=1
