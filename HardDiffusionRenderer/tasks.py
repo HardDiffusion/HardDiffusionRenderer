@@ -1,4 +1,5 @@
 """Celery tasks for generating images."""
+import io
 import os
 import platform
 from datetime import datetime
@@ -9,6 +10,7 @@ from celery import Task, shared_task
 from HardDiffusionRenderer import celeryconfig
 from HardDiffusionRenderer.image import generate_image_status, render_image
 from HardDiffusionRenderer.logs import logger
+from HardDiffusionRenderer.s3_upload import S3_HOSTNAME, USE_S3, upload_file
 
 hostname = os.getenv("HOSTNAME", os.getenv("COMPUTERNAME", platform.node()))
 if "." in hostname:
@@ -111,7 +113,13 @@ def generate_image(
         )
         end = datetime.now()
         filename = f"{task_id}.png"
-        image.save(os.path.join(celeryconfig.MEDIA_ROOT, filename))
+        if not USE_S3:
+            image.save(os.path.join(celeryconfig.MEDIA_ROOT, filename))
+        else:
+            image_bytes = io.BytesIO()
+            image.save(image_bytes, format="PNG")
+            upload_file(filename, image_bytes.getvalue(), acl="public-read")
+            hostname = S3_HOSTNAME
         # Task
         generate_image_completed_task.apply_async(
             args=[image_id, task_id, hostname, start, end, seed], queue="image_progress"

@@ -1,5 +1,6 @@
 accelerate
 black
+boto3
 celery[redis]
 diffusers[torch,training]
 flake8
