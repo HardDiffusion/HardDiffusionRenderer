@@ -40,8 +40,10 @@ if USE_S3:
         raise ValueError("S3_BUCKET_NAME must be set if USE_S3 is true.")
     _BOTO_SESSION = boto3.session.Session()
     _S3_CLIENT = _BOTO_SESSION.client("s3", **S3_KWARGS)
+    S3_HOSTNAME = f"{S3_BUCKET_NAME}.{S3_ENDPOINT_URL.replace('https://', '')}"
 else:
     _S3_CLIENT = None
+    S3_HOSTNAME = None
 
 
 def upload_file(filename, contents, acl="private", metadata=None):
