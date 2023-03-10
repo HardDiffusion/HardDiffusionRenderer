@@ -106,6 +106,7 @@ def generate_image_status(
     timestep: Optional[torch.FloatTensor],
     latents: Optional[torch.Tensor],
     task_id,
+    session_id=None,
     total_steps=None,
     vae=None,
     message=None,
@@ -123,6 +124,7 @@ def generate_image_status(
         timestep (torch.FloatTensor): The current timestep, unused currently.
         latents (torch.Tensor): The current latents.
         task_id (str): The task ID.
+        session_id (str): The session ID.
         message (str): The message to send.
         preview_image (bool): Whether to send a preview image.
 
@@ -144,6 +146,7 @@ def generate_image_status(
 
     event = {
         "task_id": task_id,
+        "session_id": session_id,
         "step": step + 1,
         "total_steps": total_steps,
         "message": message,
@@ -151,7 +154,7 @@ def generate_image_status(
     }
     from HardDiffusionRenderer.tasks import generate_image_status_task
 
-    generate_image_status_task.delay(json.dumps(event))
+    generate_image_status_task.delay(session_id, json.dumps(event))
     """
     await CHANNEL_LAYER.group_send(
         "generate",
