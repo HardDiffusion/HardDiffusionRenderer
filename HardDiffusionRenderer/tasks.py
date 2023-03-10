@@ -18,17 +18,19 @@ if "." in hostname:
 
 
 @shared_task(name="generate_image_status", queue="image_progress")
-def generate_image_status_task(event):
+def generate_image_status_task(session_id, event):
     raise NotImplementedError("This task shouldn't run here...")
 
 
 @shared_task(name="generate_image_completed", queue="image_progress")
-def generate_image_completed_task(image_id, task_id, hostname, start, end, seed):
+def generate_image_completed_task(
+    image_id, session_id, task_id, hostname, start, end, seed
+):
     raise NotImplementedError("This task shouldn't run here...")
 
 
 @shared_task(name="generate_image_error", queue="image_progress")
-def generate_image_error_task(image_id, task_id, hostname):
+def generate_image_error_task(image_id, session_id, task_id, hostname):
     raise NotImplementedError("This task shouldn't run here...")
 
 
@@ -50,6 +52,7 @@ def ensure_model_name(model_path_or_name: str) -> str:
 def generate_image(
     self,
     image_id: int,
+    session_id: str,
     prompt: str = "An astronaut riding a horse on the moon.",
     negative_prompt: Optional[str] = None,
     model_path_or_name: Optional[str] = None,
@@ -107,6 +110,7 @@ def generate_image(
             callback_steps=callback_steps,
             callback_args=[task_id],
             callback_kwargs={
+                "session_id": session_id,
                 "total_steps": num_inference_steps,
                 "preview_image": preview_image,
             },
@@ -122,12 +126,13 @@ def generate_image(
             hostname = S3_HOSTNAME
         # Task
         generate_image_completed_task.apply_async(
-            args=[image_id, task_id, hostname, start, end, seed], queue="image_progress"
+            args=[image_id, session_id, task_id, hostname, start, end, seed],
+            queue="image_progress",
         )
     except Exception as e:
         logger.error("%s", e)
         generate_image_error_task.apply_async(
-            args=[image_id, task_id, hostname], queue="image_progress"
+            args=[image_id, session_id, task_id, hostname], queue="image_progress"
         )
         raise e
     return filename, hostname
